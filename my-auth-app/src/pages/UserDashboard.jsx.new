@@ -1,0 +1,407 @@
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { API_BASE_URL } from '../config';
+import BeVolunteerForm from '../components/BeVolunteerForm';
+import VolunteerTabContent from '../components/VolunteerTabContent';
+
+// Dashboard components
+const DashboardCard = ({ title, value, icon, bgColor }) => (
+  <div className={`${bgColor} rounded-lg shadow-md p-6 text-white`}>
+    <div className="flex justify-between items-start">
+      <div>
+        <div className="text-lg font-medium opacity-80">{title}</div>
+        <div className="text-3xl font-bold mt-2">{value}</div>
+      </div>
+      <div className="text-4xl opacity-70">{icon}</div>
+    </div>
+  </div>
+);
+
+const RequestItem = ({ request, onAction }) => (
+  <div className="bg-white p-4 rounded-lg shadow mb-3 hover:shadow-md transition-shadow">
+    <div className="flex flex-col md:flex-row justify-between">
+      <div>
+        <div className="font-medium text-lg">Request #{request._id?.slice(-5)?.toUpperCase()}</div>
+        <div className="text-gray-600 text-sm">Service: {request.serviceCategory}</div>
+      </div>
+      <div className="md:text-right mt-2 md:mt-0">
+        <div className="text-sm text-gray-500">
+          {new Date(request.createdAt).toLocaleDateString('en-US', { 
+            month: 'short', day: 'numeric', year: 'numeric' 
+          })}
+        </div>
+        <div className={`text-sm font-medium ${
+          request.status === 'completed' 
+            ? 'text-green-600' 
+            : request.status === 'pending' 
+              ? 'text-yellow-600' 
+              : request.status === 'accepted'
+                ? 'text-blue-600'
+                : 'text-red-600'
+        }`}>
+          {request.status?.charAt(0).toUpperCase() + request.status?.slice(1)}
+        </div>
+      </div>
+    </div>
+    <div className="mt-3 text-gray-700">
+      <p>{request.message}</p>
+      {request.volunteerId && request.volunteerName && (
+        <p className="mt-1 text-sm">
+          <span className="font-medium">Volunteer:</span> {request.volunteerName}
+        </p>
+      )}
+    </div>
+    <div className="mt-4 flex flex-wrap gap-2">
+      {request.status === 'pending' && (
+        <button 
+          onClick={() => onAction(request._id, 'cancel')}
+          className="px-3 py-1 bg-red-100 text-red-700 rounded-md text-sm hover:bg-red-200 transition-colors"
+        >
+          Cancel Request
+        </button>
+      )}
+      {request.status === 'completed' && !request.rating && (
+        <button 
+          onClick={() => onAction(request._id, 'rate')}
+          className="px-3 py-1 bg-green-100 text-green-700 rounded-md text-sm hover:bg-green-200 transition-colors"
+        >
+          Rate Service
+        </button>
+      )}
+      {request.volunteerId && (
+        <button 
+          onClick={() => onAction(request._id, 'contact')}
+          className="px-3 py-1 bg-blue-100 text-blue-700 rounded-md text-sm hover:bg-blue-200 transition-colors"
+        >
+          Contact Volunteer
+        </button>
+      )}
+    </div>
+  </div>
+);
+
+const ChatItem = ({ chat, onViewChat }) => (
+  <div 
+    className="bg-white p-4 rounded-lg shadow mb-3 hover:shadow-md transition-shadow cursor-pointer"
+    onClick={() => onViewChat(chat._id)}
+  >
+    <div className="flex justify-between">
+      <div className="font-medium">{chat.name}</div>
+      <div className="text-sm text-gray-500">
+        {chat.lastMessage?.timestamp ? 
+          new Date(chat.lastMessage.timestamp).toLocaleDateString('en-US', { 
+            month: 'short', day: 'numeric' 
+          }) : ''}
+      </div>
+    </div>
+    <div className="mt-2 text-gray-600 text-sm truncate">
+      {chat.lastMessage?.text || 'No messages yet'}
+    </div>
+  </div>
+);
+
+const NotificationItem = ({ notification, onRead }) => (
+  <div 
+    className={`p-4 rounded-lg shadow mb-3 ${notification.read ? 'bg-white' : 'bg-blue-50'}`}
+    onClick={() => onRead(notification._id)}
+  >
+    <div className="flex justify-between">
+      <div className="font-medium">{notification.title}</div>
+      <div className="text-sm text-gray-500">
+        {new Date(notification.createdAt).toLocaleDateString('en-US', { 
+          month: 'short', day: 'numeric' 
+        })}
+      </div>
+    </div>
+    <div className="mt-2 text-gray-700">
+      {notification.message}
+    </div>
+    {!notification.read && (
+      <div className="mt-2 text-right">
+        <span className="inline-block w-2 h-2 bg-blue-500 rounded-full"></span>
+      </div>
+    )}
+  </div>
+);
+
+export default function UserDashboard() {
+  const navigate = useNavigate();
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [activeTab, setActiveTab] = useState('overview');
+  
+  // Data states
+  const [userInfo, setUserInfo] = useState(null);
+  const [requests, setRequests] = useState([]);
+  const [chats, setChats] = useState([]);
+  const [notifications, setNotifications] = useState([]);
+  const [stats, setStats] = useState({
+    totalRequests: 0,
+    completedRequests: 0,
+    pendingRequests: 0
+  });
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (!token) {
+      navigate('/');
+      return;
+    }
+
+    const fetchDashboardData = async () => {
+      setLoading(true);
+      try {
+        // Fetch user profile
+        const profileResponse = await fetch(`${API_BASE_URL}/api/auth/profile`, {
+          headers: { 'x-auth-token': token }
+        });
+        
+        if (!profileResponse.ok) throw new Error('Failed to fetch profile');
+        const profileData = await profileResponse.json();
+
+        // Check if user is a volunteer - if so, redirect to volunteer dashboard
+        if (profileData.userType === 'volunteer') {
+          navigate('/volunteer-dashboard');
+          return;
+        }
+
+        setUserInfo(profileData);
+
+        // Fetch user's requests
+        const requestsResponse = await fetch(`${API_BASE_URL}/api/requests/user`, {
+          headers: { 'x-auth-token': token }
+        });
+        
+        if (requestsResponse.ok) {
+          const requestsData = await requestsResponse.json();
+          setRequests(requestsData);
+          
+          // Count total, completed and pending requests
+          const totalRequests = requestsData.length;
+          const completedRequests = requestsData.filter(req => req.status === 'completed').length;
+          const pendingRequests = requestsData.filter(req => req.status === 'pending').length;
+          
+          setStats({
+            totalRequests,
+            completedRequests,
+            pendingRequests
+          });
+        }
+
+        // Fetch user's chats
+        const chatsResponse = await fetch(`${API_BASE_URL}/api/chat`, {
+          headers: { 'x-auth-token': token }
+        });
+        
+        if (chatsResponse.ok) {
+          const chatsData = await chatsResponse.json();
+          setChats(chatsData);
+        }
+
+        // For demo purposes - create some mock notifications
+        setNotifications([
+          {
+            _id: '1',
+            title: 'Request Accepted',
+            message: 'Your request has been accepted by a volunteer',
+            createdAt: new Date(),
+            read: false
+          },
+          {
+            _id: '2',
+            title: 'New Message',
+            message: 'You have a new message from your volunteer',
+            createdAt: new Date(Date.now() - 86400000), // 1 day ago
+            read: true
+          }
+        ]);
+      } catch (err) {
+        console.error('Error fetching dashboard data:', err);
+        setError('Failed to load dashboard data');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchDashboardData();
+  }, [navigate]);
+
+  const handleRequestAction = async (requestId, action) => {
+    switch (action) {
+      case 'cancel':
+        // Handle request cancellation
+        try {
+          const token = localStorage.getItem('token');
+          const response = await fetch(`${API_BASE_URL}/api/requests/${requestId}`, {
+            method: 'PUT',
+            headers: {
+              'Content-Type': 'application/json',
+              'x-auth-token': token
+            },
+            body: JSON.stringify({ status: 'cancelled' })
+          });
+
+          if (response.ok) {
+            setRequests(requests.map(req => 
+              req._id === requestId ? { ...req, status: 'cancelled' } : req
+            ));
+          }
+        } catch (err) {
+          console.error('Error cancelling request:', err);
+        }
+        break;
+      case 'rate':
+        // Navigate to rating page
+        navigate(`/review/${requestId}`);
+        break;
+      case 'contact':
+        // Find the chat with this volunteer or create new one
+        const request = requests.find(req => req._id === requestId);
+        if (request && request.volunteerId) {
+          // Check if chat exists
+          const existingChat = chats.find(chat => 
+            chat.participants.includes(request.volunteerId) && 
+            chat.relatedRequest === requestId
+          );
+          
+          if (existingChat) {
+            navigate(`/chat/${existingChat._id}`);
+          } else {
+            // Create new chat logic would go here
+            // For now, just navigate to the chat page
+            navigate('/chat');
+          }
+        }
+        break;
+      default:
+        break;
+    }
+  };
+
+  const handleReadNotification = (notificationId) => {
+    setNotifications(notifications.map(notification => 
+      notification._id === notificationId ? { ...notification, read: true } : notification
+    ));
+  };
+
+  const handleViewChat = (chatId) => {
+    navigate(`/chat/${chatId}`);
+  };
+
+  if (loading) {
+    return (
+      <div className="container mx-auto px-4 py-10 flex justify-center">
+        <div className="animate-pulse">
+          <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="container mx-auto px-4 py-10">
+        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded">
+          {error}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="container mx-auto px-4 py-6">
+      {/* Page Header */}
+      <div className="flex flex-col md:flex-row justify-between md:items-center mb-6">
+        <div>
+          <h1 className="text-2xl md:text-3xl font-bold text-gray-800">User Dashboard</h1>
+          <p className="text-gray-600">
+            Welcome back, {userInfo?.name}
+          </p>
+          <div className="mt-2 flex flex-wrap gap-3">
+            <span className="inline-flex items-center px-3 py-1 bg-blue-100 text-blue-800 rounded-full text-sm">
+              Total Requests: {stats.totalRequests}
+            </span>
+            <span className="inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-sm">
+              Completed: {stats.completedRequests}
+            </span>
+            <span className="inline-flex items-center px-3 py-1 bg-yellow-100 text-yellow-800 rounded-full text-sm">
+              Pending: {stats.pendingRequests}
+            </span>
+          </div>
+        </div>
+        <div className="mt-4 md:mt-0 flex space-x-3">
+          <div className="dropdown relative">
+            <button 
+              className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded-md shadow transition-colors flex items-center"
+            >
+              <span>My Profile</span>
+              <svg className="w-4 h-4 ml-1" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path>
+              </svg>
+            </button>
+            <div className="dropdown-menu hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg z-10 py-1">
+              <a href="#" onClick={() => setActiveTab('profile')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                Edit Profile
+              </a>
+              <a href="#" onClick={() => setActiveTab('notifications')} className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                Notifications
+                <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
+                  {notifications.filter(n => !n.read).length}
+                </span>
+              </a>
+            </div>
+          </div>
+          <button 
+            className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-md shadow transition-colors"
+            onClick={() => navigate('/request')}
+          >
+            Request Service
+          </button>
+        </div>
+      </div>
+
+      {/* Dashboard Navigation */}
+      <div className="mb-6 border-b border-gray-200">
+        <nav className="flex space-x-8 overflow-x-auto pb-2">
+          <button 
+            className={`py-2 px-1 ${activeTab === 'overview' ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('overview')}
+          >
+            Overview
+          </button>
+          <button 
+            className={`py-2 px-1 ${activeTab === 'requests' ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('requests')}
+          >
+            My Requests
+          </button>
+          <button 
+            className={`py-2 px-1 ${activeTab === 'volunteer' ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('volunteer')}
+          >
+            Become a Volunteer
+          </button>
+          <button 
+            className={`py-2 px-1 ${activeTab === 'chats' ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('chats')}
+          >
+            Chat History
+          </button>
+          <button 
+            className={`py-2 px-1 ${activeTab === 'notifications' ? 'border-b-2 border-blue-600 text-blue-600 font-medium' : 'text-gray-500'}`}
+            onClick={() => setActiveTab('notifications')}
+          >
+            Notifications
+            <span className="ml-1 px-2 py-0.5 text-xs rounded-full bg-blue-100 text-blue-800">
+              {notifications.filter(n => !n.read).length}
+            </span>
+          </button>
+        </nav>
+      </div>
+
+      {/* Overview Tab */}
+      {activeTab === 'overview' && (
+        <>
+          {/* Stats Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+            <DashboardCard

@@ -1,0 +1,27 @@
+# High-Quality Images for Featured Services
+
+To enhance the featured services carousel with professional-looking images, please download the following high-quality images and save them to this folder with the specified filenames:
+
+## 1. Electrician Service Image
+Download URL: https://unsplash.com/photos/man-in-orange-and-blue-crew-neck-t-shirt-holding-white-and-red-plastic-bottle-Tq7lbAeF9BQ
+Save as: electrician-featured.jpg
+
+## 2. Plumbing Service Image
+Download URL: https://unsplash.com/photos/two-men-looking-at-a-kitchen-sink-pipe-TXwWb-Zk-sE
+Save as: plumber-featured.jpg
+
+## 3. Doctor/Medical Service Image
+Download URL: https://unsplash.com/photos/smiling-woman-in-white-coat-with-blue-stethoscope-DPEPYPBZpB8
+Save as: doctor-featured.jpg
+
+## 4. Room Finder Service Image
+Download URL: https://unsplash.com/photos/white-wooden-table-with-brown-wooden-chairs-in-room-IH7wPsjwomc
+Save as: room-featured.jpg
+
+## Installation Instructions:
+1. Click on each URL to open the image
+2. Download the full-resolution image (usually by clicking the download button)
+3. Save each image to this folder (my-auth-app/public/images/featured/)
+4. Rename the downloaded images to match the filenames mentioned above
+
+After downloading these images, the application will automatically use them in the featured services carousel for a more professional appearance.

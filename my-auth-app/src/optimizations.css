@@ -1,0 +1,73 @@
+/* Performance optimizations for the service grid and overall app */
+
+/* Apply content-visibility for offscreen blocks to improve render performance */
+.service-card-wrapper {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 400px;
+  contain: layout paint style;
+  will-change: auto;
+}
+
+/* Optimize animations to use GPU rendering */
+.rounded-xl {
+  transform: translateZ(0);
+  will-change: transform;
+}
+
+/* Improve transition performance by specifying properties */
+.transition-transform,
+.transition-colors {
+  transition-property: transform, background-color;
+  transition-duration: 0.2s;
+  transition-timing-function: ease-out;
+}
+
+/* Optimize image loading */
+img {
+  backface-visibility: hidden;
+}
+
+/* Fix height ratios to prevent layout shifts */
+.h-40, .h-44 {
+  aspect-ratio: 16/9;
+}
+
+/* Optimize for scrolling performance to prevent janky scrolling */
+.min-h-screen {
+  will-change: contents; 
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  transform: translateZ(0);
+}
+
+/* Use hardware acceleration for transform effects */
+.transform-gpu,
+.hover\:scale-105 {
+  transform: translate3d(0, 0, 0);
+  will-change: transform;
+}
+
+/* Apply performant box shadows that don't require repaints */
+.shadow-lg,
+.hover\:shadow-xl {
+  transition: box-shadow 0.2s;
+  will-change: box-shadow;
+}
+
+/* Add containment for all sections to improve rendering */
+.mb-14,
+.mb-16 {
+  contain: content;
+}
+
+/* Only animate opacity and transform for better performance */
+.animate-pulse {
+  animation-duration: 1.5s;
+  will-change: opacity;
+}
+
+/* Optimize grid rendering by using the GPU */
+.grid {
+  transform: translateZ(0);
+  backface-visibility: hidden;
+}
