@@ -1,0 +1,7 @@
+{
+  "watch": ["backend", "my-auth-app/src"],
+  "ext": "js,jsx,json",
+  "ignore": ["node_modules", "my-auth-app/node_modules", "backend/node_modules"],
+  "delay": "2500",
+  "restartable": "rs"
+}

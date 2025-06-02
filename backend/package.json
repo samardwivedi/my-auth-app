@@ -29,5 +29,8 @@
     "stripe": "^13.4.0",
     "winston": "^3.17.0",
     "xss-clean": "^0.1.4"
+  },
+  "engines": {
+    "node": "18.x"
   }
 }
