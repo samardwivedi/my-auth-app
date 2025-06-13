@@ -36,7 +36,7 @@ export default function VolunteerProfile() {
       setLoading(true);
       try {
         // Fetch volunteer data
-        const res = await fetch(`/api/auth/volunteer/${id}`);
+        const res = await fetch(`/api/volunteer/${id}`);
         if (!res.ok) throw new Error('Volunteer not found');
         const volunteerData = await res.json();
         setVolunteer(volunteerData);

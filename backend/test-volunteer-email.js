@@ -75,7 +75,7 @@ const testVolunteerEmail = async () => {
       contact: 'test@example.com', // This could be different from actual email
       message: 'This is a test service request to verify email notifications',
       volunteerId: volunteer._id,
-      status: 'pending',
+      status: 'requested', // changed from 'pending' to 'requested'
       // Adding additional fields to test the complete notification format
       serviceLocation: '123 Test Street, Test City',
       serviceCategory: 'Plumbing',

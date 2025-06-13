@@ -106,7 +106,7 @@ export default function Navbar({ onLogout }) {
               isScrolled ? 'text-gray-700 dark:text-gray-300' : 'text-white'
             }`}>Chat with us</Link>
             
-            {(!isLoggedIn || (isLoggedIn && userType !== 'volunteer')) && (
+            {isLoggedIn && userType === 'customer' && (
               <Link to="/become-helper" className={`px-2 py-1 rounded text-sm ${
                 isScrolled ? 'text-gray-700 dark:text-gray-300' : 'text-white'
               }`}>Become a Helper</Link>
@@ -194,7 +194,7 @@ export default function Navbar({ onLogout }) {
               Chat with us
             </Link>
             
-            {(!isLoggedIn || (isLoggedIn && userType !== 'volunteer')) && (
+            {isLoggedIn && userType === 'customer' && (
               <Link to="/become-helper" 
                 className={`block px-3 py-2 ${
                   isScrolled ? 'text-gray-700 dark:text-gray-300' : 'text-white'

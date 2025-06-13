@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Select from 'react-select';
 import { useDropzone } from 'react-dropzone';
 import { API_BASE_URL } from '../config';
+import { useNavigate } from 'react-router-dom';
 
 const LANGUAGES = [
   'English', 'Hindi', 'Tamil', 'Bengali', 'Marathi', 'Telugu', 'Gujarati', 'Urdu', 'Kannada', 'Odia', 'Punjabi', 'Malayalam', 'Assamese', 'Other'
@@ -62,6 +63,22 @@ const BeHelperForm = () => {
   // Tag input for skills
   const [skillsOptions, setSkillsOptions] = useState([]);
   const [step, setStep] = useState(1);
+  const navigate = useNavigate();
+
+  // Autofill name/email from logged-in user
+  useEffect(() => {
+    const rawUser = localStorage.getItem('user');
+    if (rawUser) {
+      try {
+        const user = JSON.parse(rawUser);
+        setFormData(prev => ({
+          ...prev,
+          fullName: user.name || '',
+          email: user.email || ''
+        }));
+      } catch (e) {}
+    }
+  }, []);
 
   const validateField = (name, value) => {
     let error = '';
@@ -163,6 +180,20 @@ const BeHelperForm = () => {
         fullName: '', email: '', phone: '', address: '', skills: '', specializations: '', experience: '', emergencyAvailability: false, maxRequestsPerDay: '', languages: [], bio: '', serviceAreas: '', termsAccepted: false
       });
       setProfilePhoto(null);
+
+      // Update userType in localStorage if user exists
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        try {
+          const user = JSON.parse(rawUser);
+          user.userType = 'volunteer';
+          localStorage.setItem('user', JSON.stringify(user));
+        } catch (e) {}
+      }
+      // Redirect after a short delay for animation
+      setTimeout(() => {
+        navigate('/volunteer-dashboard');
+      }, 1500);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -197,12 +228,12 @@ const BeHelperForm = () => {
                   {/* Row 1 */}
                   <div>
                     <label htmlFor="fullName" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Full Name<span className="text-red-500">*</span></label>
-                    <input id="fullName" aria-label="Full Name" type="text" name="fullName" value={formData.fullName} onChange={handleChange} required className={`mt-1 block w-full border rounded-lg p-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 transition-all ${inlineErrors.fullName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`} />
+                    <input id="fullName" aria-label="Full Name" type="text" name="fullName" value={formData.fullName} onChange={handleChange} required readOnly disabled className={`mt-1 block w-full border rounded-lg p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 transition-all ${inlineErrors.fullName ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'} cursor-not-allowed`} />
                     {inlineErrors.fullName && <div className="text-xs text-red-500 mt-1 animate-shake">{inlineErrors.fullName}</div>}
                   </div>
                   <div>
                     <label htmlFor="email" className="block text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">Email Address<span className="text-red-500">*</span></label>
-                    <input id="email" aria-label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} required className={`mt-1 block w-full border rounded-lg p-2 bg-gray-50 dark:bg-gray-800 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 transition-all ${inlineErrors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'}`} />
+                    <input id="email" aria-label="Email Address" type="email" name="email" value={formData.email} onChange={handleChange} required readOnly disabled className={`mt-1 block w-full border rounded-lg p-2 bg-gray-100 dark:bg-gray-700 text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-blue-400 transition-all ${inlineErrors.email ? 'border-red-500' : 'border-gray-300 dark:border-gray-700'} cursor-not-allowed`} />
                     {inlineErrors.email && <div className="text-xs text-red-500 mt-1 animate-shake">{inlineErrors.email}</div>}
                   </div>
                   {/* Row 2 */}

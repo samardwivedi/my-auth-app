@@ -48,7 +48,7 @@ export default function VolunteerRequestService() {
   const fetchVolunteerData = async () => {
     setLoading(true);
     try {
-      const res = await fetch(`/api/auth/volunteer/${id}`);
+      const res = await fetch(`/api/volunteer/${id}`);
       if (!res.ok) throw new Error('Volunteer not found');
       const data = await res.json();
       setVolunteer(data);
@@ -90,7 +90,6 @@ export default function VolunteerRequestService() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    
     if (step === 1) {
       // Validation for step 1
       const errors = {};
@@ -100,13 +99,24 @@ export default function VolunteerRequestService() {
       if (!formData.location) errors.location = 'Required';
       if (!selectedDate) errors.date = 'Select a date';
       if (!selectedTime) errors.time = 'Select a time';
-      
+      // Name/email match validation
+      const rawUser = localStorage.getItem('user');
+      if (rawUser) {
+        try {
+          const user = JSON.parse(rawUser);
+          if (formData.userName.trim() !== (user.name || '').trim()) {
+            errors.userName = 'Name does not match your account name.';
+          }
+          if (formData.email.trim().toLowerCase() !== (user.email || '').trim().toLowerCase()) {
+            errors.email = 'Email does not match your account email.';
+          }
+        } catch (e) {}
+      }
       if (Object.keys(errors).length > 0) {
         setFormErrors(errors);
         return;
       }
-      
-      // Move to payment step
+      setFormErrors({});
       setStep(2);
       return;
     }

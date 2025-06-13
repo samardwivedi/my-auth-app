@@ -56,13 +56,13 @@ app.use(cors({
 // Security middleware
 // Security: HTTP headers
 app.use(helmet());
-// Security: Rate limiting (100 requests per 15 min per IP)
-app.use(rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
-  standardHeaders: true,
-  legacyHeaders: false,
-}));
+// REMOVE rate limiting for development
+// app.use(rateLimit({
+//   windowMs: 15 * 60 * 1000,
+//   max: 100,
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// }));
 // Security: Prevent XSS attacks
 app.use(xss());
 // Security: Prevent NoSQL injection
@@ -246,7 +246,7 @@ try {
   }
   app.use('/api/admin', adminRoutes);
 
-// Stats routes
+  // Stats routes
   const statsRoutes = require('./routes/stats');
   if (typeof statsRoutes !== 'function') {
     console.error('Error: statsRoutes is not a function. Type:', typeof statsRoutes);
@@ -261,6 +261,22 @@ try {
     throw new Error('Invalid router object');
   }
   app.use('/api/user', userRoutes);
+
+  // Helper application routes
+  const helperRoutes = require('./routes/helper');
+  if (typeof helperRoutes !== 'function') {
+    console.error('Error: helperRoutes is not a function. Type:', typeof helperRoutes);
+    throw new Error('Invalid router object');
+  }
+  app.use('/api/helpers', helperRoutes);
+
+  // Volunteer profile routes
+  const volunteerRoutes = require('./routes/volunteer');
+  if (typeof volunteerRoutes !== 'function') {
+    console.error('Error: volunteerRoutes is not a function. Type:', typeof volunteerRoutes);
+    throw new Error('Invalid router object');
+  }
+  app.use('/api/volunteer', volunteerRoutes);
 } catch (error) {
   console.error('Failed to load routes:', error);
 }

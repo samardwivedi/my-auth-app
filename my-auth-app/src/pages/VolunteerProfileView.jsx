@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
 import { API_BASE_URL } from '../config';
@@ -23,7 +22,7 @@ export default function VolunteerProfileView() {
       setLoading(true);
       try {
         // Fetch volunteer data
-        const res = await fetch(`${API_BASE_URL}/api/auth/volunteer/${id}`);
+        const res = await fetch(`${API_BASE_URL}/api/volunteer/${id}`);
         if (!res.ok) throw new Error('Volunteer not found');
         const volunteerData = await res.json();
         setVolunteer(volunteerData);
