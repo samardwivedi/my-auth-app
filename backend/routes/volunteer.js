@@ -22,4 +22,14 @@ router.get('/:id', async (req, res) => {
   }
 });
 
+// GET /api/volunteer - List all volunteers (public)
+router.get('/', async (req, res) => {
+  try {
+    const volunteers = await User.find({ userType: 'volunteer', status: 'active' }).select('-password');
+    res.json(volunteers);
+  } catch (err) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 module.exports = router;
