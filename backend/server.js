@@ -345,6 +345,11 @@ const startServer = () => {
   });
 };
 
+// Root route for health check or welcome message
+app.get('/', (req, res) => {
+  res.json({ status: 'API is running' });
+});
+
 // Start the server
 startServer();
 
@@ -357,8 +362,3 @@ startServer();
 // - Use Stripe Connect for holding and releasing payments
 // - Store all Stripe secrets in .env
 // - Log all payment actions using Winston
-
-// Root route for health check or welcome message
-app.get('/', (req, res) => {
-  res.json({ status: 'API is running' });
-});
