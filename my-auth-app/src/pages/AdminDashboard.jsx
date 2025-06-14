@@ -3,6 +3,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import AdminDashboardAnalytics from './AdminDashboardAnalytics';
 import RequestTrendsChart from '../components/charts/RequestTrendsChart';
 import ConversionFunnel from '../components/charts/ConversionFunnel';
+import { API_BASE_URL } from '../config';
 
 // ActionDropdown component for grouping actions in a dropdown menu
 function ActionDropdown({ request, onAction }) {
@@ -407,7 +408,7 @@ const AdminDashboard = () => {
         return;
       }
       
-      const response = await fetch('http://localhost:5003/api/admin/users', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/users`, {
         headers: {
           'x-auth-token': token,
           'Authorization': `Bearer ${token}`
@@ -440,7 +441,7 @@ const AdminDashboard = () => {
         return;
       }
       
-      const response = await fetch('http://localhost:5003/api/admin/requests', {
+      const response = await fetch(`${API_BASE_URL}/api/admin/requests`, {
         headers: {
           'x-auth-token': token,
           'Authorization': `Bearer ${token}`
@@ -530,7 +531,7 @@ const AdminDashboard = () => {
         return;
       }
       
-      const response = await fetch(`http://localhost:5003${endpoint}`, {
+      const response = await fetch(`${API_BASE_URL}${endpoint}`, {
         method,
         headers: {
           'Content-Type': 'application/json',

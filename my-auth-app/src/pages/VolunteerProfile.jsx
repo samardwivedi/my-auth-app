@@ -36,13 +36,13 @@ export default function VolunteerProfile() {
       setLoading(true);
       try {
         // Fetch volunteer data
-        const res = await fetch(`/api/volunteer/${id}`);
+        const res = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/volunteer/${id}`);
         if (!res.ok) throw new Error('Volunteer not found');
         const volunteerData = await res.json();
         setVolunteer(volunteerData);
 
         // Fetch reviews for this volunteer
-        const reviewsRes = await fetch(`/api/reviews/volunteer/${id}`);
+        const reviewsRes = await fetch(`${process.env.REACT_APP_API_URL || ''}/api/reviews/volunteer/${id}`);
         if (reviewsRes.ok) {
           const reviewsData = await reviewsRes.json();
           setReviews(reviewsData);
@@ -203,13 +203,21 @@ export default function VolunteerProfile() {
         <div className="bg-gradient-to-r from-blue-600 to-indigo-600 text-white p-6">
           <div className="flex flex-col md:flex-row md:items-center">
             {/* Show profile photo if available */}
-            {volunteer.photo || volunteer.photoUrl ? (
-              <img
-                src={volunteer.photo || volunteer.photoUrl}
-                alt={volunteer.name + " profile"}
-                className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-lg mb-4 md:mb-0 md:mr-6"
-              />
-            ) : null}
+           {volunteer.photo || volunteer.photoUrl ? (
+  <img
+    src={volunteer.photo || volunteer.photoUrl}
+    alt={volunteer.name + " profile"}
+    className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-lg mb-4 md:mb-0 md:mr-6"
+    onError={e => { e.target.src = '/images/avatar-placeholder.jpg'; }}
+  />
+) : (
+  <img
+    src="/images/avatar-placeholder.jpg"
+    alt="Default profile"
+    className="w-28 h-28 object-cover rounded-full border-4 border-white shadow-lg mb-4 md:mb-0 md:mr-6"
+  />
+)}
+       
             <div className="flex-1">
               <h1 className="text-3xl font-bold">{volunteer.name}</h1>
               <p className="mt-2 text-blue-100">
@@ -295,7 +303,7 @@ export default function VolunteerProfile() {
               <section className="mb-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Skills & Expertise</h2>
                 <div className="flex flex-wrap gap-2">
-                  {volunteer.skills.map((skill, idx) => (
+                  {(volunteer.skills || []).map((skill, idx) => (
                     <span key={idx} className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
                       {skill}
                     </span>
@@ -307,7 +315,7 @@ export default function VolunteerProfile() {
               <section className="mb-8">
                 <h2 className="text-xl font-bold text-gray-900 mb-4">Languages</h2>
                 <div className="flex flex-wrap gap-2">
-                  {volunteer.languages.map((language, idx) => (
+                  {(volunteer.languages || []).map((language, idx) => (
                     <span key={idx} className="inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium bg-green-100 text-green-800">
                       {language}
                     </span>
@@ -321,7 +329,7 @@ export default function VolunteerProfile() {
                 {reviews.length > 0 ? (
                   <div className="space-y-4">
                     {reviews.map(review => (
-                      <div key={review.id} className="bg-gray-50 p-4 rounded-lg">
+                      <div key={review._id || review.id} className="bg-gray-50 p-4 rounded-lg">
                         <div className="flex justify-between">
                           <p className="font-medium">{review.userName}</p>
                           <p className="text-gray-500 text-sm">{new Date(review.date).toLocaleDateString()}</p>
